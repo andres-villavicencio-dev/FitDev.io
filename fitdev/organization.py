@@ -9,45 +9,45 @@ from typing import Dict, List, Any, Optional, Type
 import logging
 from pathlib import Path
 
-from models.agent import BaseAgent
-from models.critic import BaseCritic
-from models.task import Task, TaskStatus
-from models.compensation import CompensationSystem
-from config.config import load_config
+from fitdev.models.agent import BaseAgent
+from fitdev.models.critic import BaseCritic
+from fitdev.models.task import Task, TaskStatus
+from fitdev.models.compensation import CompensationSystem
+from fitdev.config.config import load_config
 
 # Import agent implementations
-from agents.executive.ceo import CEOAgent
-from agents.executive.cto import CTOAgent
-from agents.executive.product_owner import ProductOwnerAgent
-from agents.development.frontend import FrontendDeveloperAgent
-from agents.development.backend import BackendDeveloperAgent
-from agents.development.fullstack import FullStackDeveloperAgent
-from agents.development.devops import DevOpsEngineerAgent
-from agents.quality.qa_engineer import QAEngineerAgent
-from agents.quality.security_specialist import SecuritySpecialistAgent
-from agents.quality.technical_writer import TechnicalWriterAgent
-from agents.specialized.knowledge_management import KnowledgeManagementAgent
-from agents.specialized.trend_scout import TrendScoutAgent
-from agents.specialized.ux_simulator import UXSimulatorAgent
-from agents.specialized.api_specialist import APISpecialistAgent
-from agents.specialized.tech_debt_manager import TechDebtManagerAgent
+from fitdev.agents.executive.ceo import CEOAgent
+from fitdev.agents.executive.cto import CTOAgent
+from fitdev.agents.executive.product_owner import ProductOwnerAgent
+from fitdev.agents.development.frontend import FrontendDeveloperAgent
+from fitdev.agents.development.backend import BackendDeveloperAgent
+from fitdev.agents.development.fullstack import FullStackDeveloperAgent
+from fitdev.agents.development.devops import DevOpsEngineerAgent
+from fitdev.agents.quality.qa_engineer import QAEngineerAgent
+from fitdev.agents.quality.security_specialist import SecuritySpecialistAgent
+from fitdev.agents.quality.technical_writer import TechnicalWriterAgent
+from fitdev.agents.specialized.knowledge_management import KnowledgeManagementAgent
+from fitdev.agents.specialized.trend_scout import TrendScoutAgent
+from fitdev.agents.specialized.ux_simulator import UXSimulatorAgent
+from fitdev.agents.specialized.api_specialist import APISpecialistAgent
+from fitdev.agents.specialized.tech_debt_manager import TechDebtManagerAgent
 
 # Import critic implementations
-from critics.executive.ceo_critic import CEOCritic
-from critics.executive.cto_critic import CTOCritic
-from critics.executive.product_owner_critic import ProductOwnerCritic
-from critics.development.frontend_critic import FrontendDeveloperCritic
-from critics.development.backend_critic import BackendDeveloperCritic
-from critics.development.fullstack_critic import FullStackDeveloperCritic
-from critics.development.devops_critic import DevOpsEngineerCritic
-from critics.quality.qa_engineer_critic import QAEngineerCritic
-from critics.quality.security_specialist_critic import SecuritySpecialistCritic
-from critics.quality.technical_writer_critic import TechnicalWriterCritic
-from critics.specialized.knowledge_management_critic import KnowledgeManagementCritic
-from critics.specialized.trend_scout_critic import TrendScoutCritic
-from critics.specialized.ux_simulator_critic import UXSimulatorCritic
-from critics.specialized.api_specialist_critic import APISpecialistCritic
-from critics.specialized.tech_debt_manager_critic import TechDebtManagerCritic
+from fitdev.critics.executive.ceo_critic import CEOCritic
+from fitdev.critics.executive.cto_critic import CTOCritic
+from fitdev.critics.executive.product_owner_critic import ProductOwnerCritic
+from fitdev.critics.development.frontend_critic import FrontendDeveloperCritic
+from fitdev.critics.development.backend_critic import BackendDeveloperCritic
+from fitdev.critics.development.fullstack_critic import FullStackDeveloperCritic
+from fitdev.critics.development.devops_critic import DevOpsEngineerCritic
+from fitdev.critics.quality.qa_engineer_critic import QAEngineerCritic
+from fitdev.critics.quality.security_specialist_critic import SecuritySpecialistCritic
+from fitdev.critics.quality.technical_writer_critic import TechnicalWriterCritic
+from fitdev.critics.specialized.knowledge_management_critic import KnowledgeManagementCritic
+from fitdev.critics.specialized.trend_scout_critic import TrendScoutCritic
+from fitdev.critics.specialized.ux_simulator_critic import UXSimulatorCritic
+from fitdev.critics.specialized.api_specialist_critic import APISpecialistCritic
+from fitdev.critics.specialized.tech_debt_manager_critic import TechDebtManagerCritic
 
 logger = logging.getLogger(__name__)
 

@@ -2,20 +2,20 @@
 # -*- coding: utf-8 -*-
 
 """
-FitDev.io - Virtual Software Development Organization Generator
-
-Main entry point for the FitDev.io application.
+FitDev.io Runner
 """
 
-import logging
+import sys
+import os
 import argparse
-from dotenv import load_dotenv
 
+# Add the parent directory to the path so that 'fitdev' can be imported
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
+# Now import from the fitdev package
 from fitdev.organization import Organization
 from fitdev.models.task import Task
-
-# Load environment variables
-load_dotenv()
+import logging
 
 # Configure logging
 logging.basicConfig(
@@ -24,13 +24,8 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-
 def create_sample_tasks(org: Organization) -> None:
-    """Create sample tasks for the organization.
-    
-    Args:
-        org: Organization to add tasks to
-    """
+    """Create sample tasks for the organization."""
     # Executive tasks
     
     # Project Planning Task
@@ -97,7 +92,6 @@ def create_sample_tasks(org: Organization) -> None:
         priority=5
     )
     org.add_task(devops_task)
-
 
 def main():
     """Main application entry point."""

@@ -6,8 +6,8 @@ CEO/Project Manager Agent for FitDev.io
 """
 
 from typing import Dict, Any, List
-from models.agent import BaseAgent
-from models.task import Task, TaskStatus
+from fitdev.models.agent import BaseAgent
+from fitdev.models.task import Task, TaskStatus
 
 
 class CEOAgent(BaseAgent):

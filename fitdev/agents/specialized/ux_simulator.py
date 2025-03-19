@@ -6,7 +6,7 @@ UX Simulator Agent for FitDev.io
 """
 
 from typing import Dict, Any, List
-from models.agent import BaseAgent
+from fitdev.models.agent import BaseAgent
 
 
 class UXSimulatorAgent(BaseAgent):

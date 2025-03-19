@@ -6,7 +6,7 @@ Security Specialist Critic for FitDev.io
 """
 
 from typing import Dict, Any, List
-from models.critic import BaseCritic
+from fitdev.models.critic import BaseCritic
 
 
 class SecuritySpecialistCritic(BaseCritic):

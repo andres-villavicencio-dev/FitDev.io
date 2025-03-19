@@ -6,7 +6,7 @@ DevOps Engineer Agent for FitDev.io
 """
 
 from typing import Dict, Any, List
-from models.agent import BaseAgent
+from fitdev.models.agent import BaseAgent
 
 
 class DevOpsEngineerAgent(BaseAgent):

@@ -5,9 +5,9 @@
 Quality Critics for FitDev.io
 """
 
-from critics.quality.qa_engineer_critic import QAEngineerCritic
-from critics.quality.security_specialist_critic import SecuritySpecialistCritic
-from critics.quality.technical_writer_critic import TechnicalWriterCritic
+from fitdev.critics.quality.qa_engineer_critic import QAEngineerCritic
+from fitdev.critics.quality.security_specialist_critic import SecuritySpecialistCritic
+from fitdev.critics.quality.technical_writer_critic import TechnicalWriterCritic
 
 __all__ = [
     'QAEngineerCritic',
