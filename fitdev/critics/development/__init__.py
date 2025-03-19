@@ -1,0 +1,5 @@
+# Development critics initialization
+from critics.development.frontend_critic import FrontendDeveloperCritic
+from critics.development.backend_critic import BackendDeveloperCritic
+from critics.development.fullstack_critic import FullStackDeveloperCritic
+from critics.development.devops_critic import DevOpsEngineerCritic
