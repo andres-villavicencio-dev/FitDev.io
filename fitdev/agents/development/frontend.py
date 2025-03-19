@@ -6,7 +6,11 @@ Frontend Developer Agent for FitDev.io
 """
 
 from typing import Dict, Any, List
-from fitdev.models.agent import BaseAgent
+import logging
+import json
+from fitdev.models.agent import BaseAgent, UTILS_AVAILABLE
+
+logger = logging.getLogger(__name__)
 
 
 class FrontendDeveloperAgent(BaseAgent):
@@ -44,7 +48,55 @@ class FrontendDeveloperAgent(BaseAgent):
         Returns:
             Task results and metadata
         """
-        # Task execution logic for the Frontend Developer agent
+        # If LLM is enabled, use it for more intelligent responses
+        if self.llm_enabled and UTILS_AVAILABLE:
+            logger.info(f"Frontend Developer executing task with LLM: {task.get('title', 'Unknown task')}")
+            
+            # For research-intensive tasks, gather information first
+            task_description = task.get("description", "")
+            task_type = task.get("type", "")
+            
+            # For frontend tasks that might benefit from research, do that first
+            research_results = None
+            if self.browser_enabled and task_description and task_type in ["component_implementation", "styling"]:
+                # Determine what to research based on task type
+                research_topic = None
+                if "component" in task_description.lower():
+                    component_type = task.get("component_type", "UI component")
+                    framework = task.get("framework", "React")
+                    research_topic = f"best practices for {framework} {component_type} implementation"
+                elif "style" in task_description.lower() or task_type == "styling":
+                    style_type = task.get("style_type", "CSS")
+                    research_topic = f"modern {style_type} styling techniques and best practices"
+                
+                if research_topic:
+                    logger.info(f"Frontend Developer researching: {research_topic}")
+                    research_results = self.research_topic(research_topic, max_pages=2)
+                    # Store in memory for future tasks
+                    self.set_memory(f"research_{task_type}", research_results)
+            
+            # Add research results to task context if available
+            task_context = {
+                "task_type": task_type,
+                "agent_skills": self.skills,
+                "task_details": task
+            }
+            
+            if research_results and research_results.get("status") == "success":
+                task_context["research_results"] = research_results
+            
+            # Execute task with LLM
+            try:
+                llm_results = self.execute_task_with_llm(task)
+                if llm_results and llm_results["status"] == "completed":
+                    # Update metrics based on task execution
+                    self._update_metrics_from_task(task)
+                    return llm_results
+            except Exception as e:
+                logger.error(f"Error executing task with LLM: {str(e)}")
+                # Fall back to standard implementation
+        
+        # Standard implementation logic based on task type
         task_type = task.get("type", "")
         results = {"status": "completed", "agent": self.name}
         
