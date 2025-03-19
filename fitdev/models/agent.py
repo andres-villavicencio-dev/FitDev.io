@@ -290,11 +290,12 @@ class BaseAgent(ABC):
         self.task_strategy = TaskStrategySystem(self.id, self.role)
         
         # Track the last used strategy and prompt for updating later
-        self.last_used = {
-            "task_type": "",
-            "strategy": "",
-            "prompt_template": ""
-        }
+        if not hasattr(self, 'last_used'):
+            self.last_used = {
+                "task_type": "",
+                "strategy": "",
+                "prompt_template": ""
+            }
     
     def _load_learning_data(self) -> None:
         """Load learning data from files if available."""

@@ -1,0 +1,20 @@
+{
+  "agent_id": "68adf67f-c37b-4840-b74a-227c3b239550",
+  "role": "development",
+  "templates": {
+    "general": [
+      "Complete the following task: {task_description}",
+      "As a {role}, your task is to: {task_description}",
+      "You are a {role} working on: {task_description}. Provide a detailed solution."
+    ]
+  },
+  "results": {
+    "api_development": [
+      {
+        "template": "Complete the following task: Create a RESTful API for user management",
+        "compensation": 0.9,
+        "timestamp": null
+      }
+    ]
+  }
+}

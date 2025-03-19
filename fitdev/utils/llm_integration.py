@@ -167,8 +167,32 @@ class OllamaProvider(LLMProvider):
             response = requests.post(self.api_url, headers=headers, json=data)
             response.raise_for_status()
             
-            result = response.json()
-            return result.get("response", "No response generated")
+            # Ollama returns a stream of JSON objects, one per line
+            # We need to extract the response from each line and concatenate
+            full_response = ""
+            
+            # Get the complete response text
+            response_text = response.text
+            
+            # Handle streaming response format (multiple JSON objects per line)
+            for line in response_text.strip().split('\n'):
+                try:
+                    result = json.loads(line)
+                    if 'response' in result:
+                        full_response += result['response']
+                except json.JSONDecodeError:
+                    logger.warning(f"Failed to parse Ollama response line: {line[:50]}...")
+            
+            if not full_response:
+                # Fallback for non-streaming responses
+                try:
+                    result = json.loads(response_text)
+                    full_response = result.get("response", "")
+                except json.JSONDecodeError:
+                    logger.error(f"Failed to parse Ollama response: {response_text[:100]}...")
+                    full_response = "Error parsing response"
+            
+            return full_response or "No response generated"
             
         except Exception as e:
             logger.error(f"Error calling Ollama API: {str(e)}")
@@ -259,7 +283,7 @@ class LLMManager:
         Returns:
             Generated response with the agent's work output
         """
-        system_message = f"""You are {agent_name}, a {agent_role} in a software development organization. 
+        system_message = f"""You are {agent_name}, a {agent_role} in FitDev.io, a software development organization. 
 Your task is to produce high-quality work based on the given requirements. 
 Provide detailed, professional output as if you were a real software developer."""
         
@@ -297,5 +321,5 @@ llm_manager = LLMManager(default_provider=os.getenv("DEFAULT_LLM_PROVIDER", llm_
 
 # If using Ollama, initialize with the configured default model
 if "ollama" in llm_manager.providers:
-    default_ollama_model = os.getenv("OLLAMA_MODEL", ollama_config.get("default_model", "gemma3"))
+    default_ollama_model = os.getenv("OLLAMA_MODEL", ollama_config.get("default_model", "mistral-small:24b"))
     llm_manager.providers["ollama"] = OllamaProvider(model_name=default_ollama_model)

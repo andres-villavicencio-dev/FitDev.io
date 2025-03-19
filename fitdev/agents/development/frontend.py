@@ -57,6 +57,10 @@ class FrontendDeveloperAgent(BaseAgent):
             task_description = task.get("description", "")
             task_type = task.get("type", "")
             
+            # Make sure last_used is initialized
+            if not hasattr(self, 'last_used'):
+                self._initialize_learning_systems()
+                
             # Record task type for learning
             self.last_used["task_type"] = task_type
             

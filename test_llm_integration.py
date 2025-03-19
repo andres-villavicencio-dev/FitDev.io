@@ -51,7 +51,7 @@ def test_llm_setup():
     ollama_base = os.getenv("OLLAMA_API_BASE")
     if ollama_base or os.path.exists("/usr/local/bin/ollama") or os.path.exists("/usr/bin/ollama"):
         # Add Ollama provider
-        llm_manager.add_provider("ollama", OllamaProvider(model_name="llama3:latest"))
+        llm_manager.add_provider("ollama", OllamaProvider(model_name="gemma3"))
         logger.info("Testing Ollama provider...")
         
         try:
@@ -100,37 +100,37 @@ def test_browser_capabilities():
 def test_frontend_developer_with_llm():
     """Test Frontend Developer agent with LLM capabilities."""
     logger.info("Testing Frontend Developer agent with LLM capabilities...")
-    
+
     # Enable LLM
     os.environ["ENABLE_LLM"] = "true"
     os.environ["ENABLE_BROWSER"] = "true"
-    
+
     # Create a frontend developer agent
-    frontend_dev = FrontendDeveloperAgent()
-    
+    frontend_dev = FrontendDeveloperAgent()  # Removed .last_used
+
     # Create a task
     task = {
-        "id": "task-123",
-        "title": "Create User Profile Component",
-        "description": "Implement a responsive user profile component with avatar, user details, and edit functionality",
-        "type": "component_implementation",
-        "component_type": "profile",
-        "framework": "React"
+       "id": "task-123",
+       "title": "Create User Profile Component",
+       "description": "Implement a responsive user profile component with avatar, user details, and edit functionality",
+       "type": "component_implementation",
+       "component_type": "profile",
+       "framework": "React"
     }
-    
+
     # Execute the task
-    logger.info(f"Executing task: {task['title']}...")
-    
+    logger.info(f"Executing task: {task['title']}... ")
+
     try:
         result = frontend_dev.execute_task(task)
         logger.info(f"Task execution result status: {result.get('status', 'unknown')}")
-        
+
         # Check if component was generated
         if "component" in result:
             component = result["component"]
             code = component.get("code", "")
             logger.info(f"Generated component code length: {len(code)} characters")
-            
+
             # Show a snippet of the code
             if code:
                 logger.info(f"Code snippet: {code[:200]}...")

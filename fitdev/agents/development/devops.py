@@ -44,6 +44,15 @@ class DevOpsEngineerAgent(BaseAgent):
         Returns:
             Task results and metadata
         """
+        # If LLM or learning is enabled, use enhanced execution
+        if (self.llm_enabled or self.learning_enabled) and hasattr(self, 'UTILS_AVAILABLE') and self.UTILS_AVAILABLE:
+            # Make sure last_used is initialized
+            if not hasattr(self, 'last_used'):
+                self._initialize_learning_systems()
+                
+            # Record task type for learning
+            self.last_used["task_type"] = task.get("type", "")
+        
         # Task execution logic for the DevOps Engineer agent
         task_type = task.get("type", "")
         results = {"status": "completed", "agent": self.name}
