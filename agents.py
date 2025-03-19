@@ -7,17 +7,12 @@ import os
 os.environ["OPENAI_API_KEY"]='NA'
 
 llm_mistral = ChatOpenAI(
-    model = "mistral",
-    base_url = "http://localhost:11434/v1",
-    api_key="NA")
-
-llm_llama3 = ChatOpenAI(
-    model = "llama3:instruct",
+    model = "mistral-small",
     base_url = "http://localhost:11434/v1",
     api_key="NA")
 
 llm_gemma = ChatOpenAI(
-    model = "gemma",
+    model = "gemma3",
     base_url = "http://localhost:11434/v1",
     api_key="NA")
 
