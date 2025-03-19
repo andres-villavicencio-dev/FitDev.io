@@ -1,0 +1,21 @@
+{
+  "agent_id": "5daa531e-5c82-4908-8223-0dfdc0772f92",
+  "role": "quality",
+  "learning_rate": 0.05,
+  "parameters": {
+    "thoroughness": 0.5,
+    "creativity": 0.5,
+    "risk_taking": 0.5
+  },
+  "history": [
+    {
+      "parameters": {
+        "thoroughness": 0.5,
+        "creativity": 0.5,
+        "risk_taking": 0.5
+      },
+      "compensation": 0.0,
+      "timestamp": null
+    }
+  ]
+}

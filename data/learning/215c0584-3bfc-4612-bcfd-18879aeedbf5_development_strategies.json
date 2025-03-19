@@ -1,0 +1,40 @@
+{
+  "agent_id": "215c0584-3bfc-4612-bcfd-18879aeedbf5",
+  "role": "development",
+  "exploration_rate": 0.2,
+  "strategies": {
+    "general": [
+      {
+        "name": "Thorough Analysis",
+        "description": "Spend extra time analyzing the requirements before implementation",
+        "steps": [
+          "analyze",
+          "plan",
+          "implement",
+          "test",
+          "document"
+        ]
+      },
+      {
+        "name": "Rapid Implementation",
+        "description": "Focus on quickly implementing a working solution",
+        "steps": [
+          "quick_plan",
+          "implement",
+          "basic_test"
+        ]
+      },
+      {
+        "name": "Research-First",
+        "description": "Research similar solutions before implementation",
+        "steps": [
+          "research",
+          "analyze",
+          "implement",
+          "test"
+        ]
+      }
+    ]
+  },
+  "results": {}
+}

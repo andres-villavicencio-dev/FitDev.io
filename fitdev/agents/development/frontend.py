@@ -8,6 +8,7 @@ Frontend Developer Agent for FitDev.io
 from typing import Dict, Any, List
 import logging
 import json
+import random
 from fitdev.models.agent import BaseAgent, UTILS_AVAILABLE
 
 logger = logging.getLogger(__name__)
@@ -48,34 +49,58 @@ class FrontendDeveloperAgent(BaseAgent):
         Returns:
             Task results and metadata
         """
-        # If LLM is enabled, use it for more intelligent responses
-        if self.llm_enabled and UTILS_AVAILABLE:
-            logger.info(f"Frontend Developer executing task with LLM: {task.get('title', 'Unknown task')}")
+        # If LLM or learning is enabled, use enhanced execution
+        if (self.llm_enabled or self.learning_enabled) and UTILS_AVAILABLE:
+            logger.info(f"Frontend Developer executing task with enhanced capabilities: {task.get('title', 'Unknown task')}")
             
-            # For research-intensive tasks, gather information first
+            # Get task details
             task_description = task.get("description", "")
             task_type = task.get("type", "")
             
+            # Record task type for learning
+            self.last_used["task_type"] = task_type
+            
+            # Get execution strategy from learning system if enabled
+            if self.learning_enabled:
+                strategy = self.get_task_execution_strategy(task_type)
+                logger.info(f"Using strategy: {strategy['name']} - {strategy['description']}")
+                
+                # Adjust parameters based on learning
+                thoroughness = self.get_parameter("thoroughness")
+                creativity = self.get_parameter("creativity")
+                design_focus = self.get_parameter("design_focus") if task_type == "component_implementation" else 0.5
+                
+                logger.debug(f"Parameters - thoroughness: {thoroughness:.2f}, " +
+                           f"creativity: {creativity:.2f}, design_focus: {design_focus:.2f}")
+            
             # For frontend tasks that might benefit from research, do that first
             research_results = None
-            if self.browser_enabled and task_description and task_type in ["component_implementation", "styling"]:
-                # Determine what to research based on task type
-                research_topic = None
-                if "component" in task_description.lower():
-                    component_type = task.get("component_type", "UI component")
-                    framework = task.get("framework", "React")
-                    research_topic = f"best practices for {framework} {component_type} implementation"
-                elif "style" in task_description.lower() or task_type == "styling":
-                    style_type = task.get("style_type", "CSS")
-                    research_topic = f"modern {style_type} styling techniques and best practices"
+            if self.browser_enabled and task_description:
+                # Use learning parameters to decide whether to research
+                should_research = True
+                if self.learning_enabled:
+                    # More thorough agents are more likely to do research
+                    research_threshold = 0.3 if self.get_parameter("thoroughness") > 0.7 else 0.6
+                    should_research = random.random() < research_threshold
                 
-                if research_topic:
-                    logger.info(f"Frontend Developer researching: {research_topic}")
-                    research_results = self.research_topic(research_topic, max_pages=2)
-                    # Store in memory for future tasks
-                    self.set_memory(f"research_{task_type}", research_results)
+                if should_research and task_type in ["component_implementation", "styling"]:
+                    # Determine what to research based on task type
+                    research_topic = None
+                    if "component" in task_description.lower():
+                        component_type = task.get("component_type", "UI component")
+                        framework = task.get("framework", "React")
+                        research_topic = f"best practices for {framework} {component_type} implementation"
+                    elif "style" in task_description.lower() or task_type == "styling":
+                        style_type = task.get("style_type", "CSS")
+                        research_topic = f"modern {style_type} styling techniques and best practices"
+                    
+                    if research_topic:
+                        logger.info(f"Frontend Developer researching: {research_topic}")
+                        research_results = self.research_topic(research_topic, max_pages=2)
+                        # Store in memory for future tasks
+                        self.set_memory(f"research_{task_type}", research_results)
             
-            # Add research results to task context if available
+            # Prepare context for LLM
             task_context = {
                 "task_type": task_type,
                 "agent_skills": self.skills,
@@ -85,16 +110,65 @@ class FrontendDeveloperAgent(BaseAgent):
             if research_results and research_results.get("status") == "success":
                 task_context["research_results"] = research_results
             
-            # Execute task with LLM
-            try:
-                llm_results = self.execute_task_with_llm(task)
-                if llm_results and llm_results["status"] == "completed":
-                    # Update metrics based on task execution
-                    self._update_metrics_from_task(task)
-                    return llm_results
-            except Exception as e:
-                logger.error(f"Error executing task with LLM: {str(e)}")
-                # Fall back to standard implementation
+            # Add learning parameters to context if available
+            if self.learning_enabled:
+                task_context["parameters"] = {
+                    param: self.get_parameter(param)
+                    for param in ["thoroughness", "creativity", "risk_taking", 
+                                 "design_focus", "accessibility_focus"]
+                    if hasattr(self.parameter_learning, "parameters") and 
+                    param in self.parameter_learning.parameters
+                }
+                
+                # Add execution strategy
+                if hasattr(self, "last_used") and "strategy" in self.last_used:
+                    task_context["strategy"] = self.last_used["strategy"]
+            
+            # Get optimized prompt if learning is enabled
+            if self.learning_enabled and self.llm_enabled:
+                # Create prompt context with all relevant information
+                prompt_context = {
+                    "task_description": task_description,
+                    "task_type": task_type,
+                    "role": self.role,
+                    "framework": task.get("framework", "React"),
+                    "component_type": task.get("component_type", "")
+                }
+                
+                # Get optimized prompt
+                optimized_prompt = self.get_optimized_prompt(task_type, prompt_context)
+                
+                # Use this prompt for the LLM task
+                system_message = f"You are {self.name}, a frontend developer specialized in building user interfaces."
+                try:
+                    response = self.get_llm_response(optimized_prompt, system_message)
+                    
+                    # Try to parse as JSON
+                    try:
+                        json_response = json.loads(response)
+                        if isinstance(json_response, dict):
+                            json_response["agent"] = self.name
+                            json_response["status"] = "completed"
+                            # Update metrics based on task execution
+                            self._update_metrics_from_task(task)
+                            return json_response
+                    except json.JSONDecodeError:
+                        # Continue with regular LLM execution if parsing fails
+                        pass
+                except Exception as e:
+                    logger.error(f"Error with optimized prompt: {str(e)}")
+            
+            # Fall back to standard LLM execution if optimized prompt fails
+            if self.llm_enabled:
+                try:
+                    llm_results = self.execute_task_with_llm(task)
+                    if llm_results and llm_results["status"] == "completed":
+                        # Update metrics based on task execution
+                        self._update_metrics_from_task(task)
+                        return llm_results
+                except Exception as e:
+                    logger.error(f"Error executing task with LLM: {str(e)}")
+                    # Fall back to standard implementation
         
         # Standard implementation logic based on task type
         task_type = task.get("type", "")

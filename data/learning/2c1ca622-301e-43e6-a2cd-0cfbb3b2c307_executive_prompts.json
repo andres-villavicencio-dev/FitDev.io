@@ -1,0 +1,12 @@
+{
+  "agent_id": "2c1ca622-301e-43e6-a2cd-0cfbb3b2c307",
+  "role": "executive",
+  "templates": {
+    "general": [
+      "Complete the following task: {task_description}",
+      "As a {role}, your task is to: {task_description}",
+      "You are a {role} working on: {task_description}. Provide a detailed solution."
+    ]
+  },
+  "results": {}
+}

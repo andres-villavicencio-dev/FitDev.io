@@ -6,7 +6,12 @@ Backend Developer Agent for FitDev.io
 """
 
 from typing import Dict, Any, List
-from fitdev.models.agent import BaseAgent
+import logging
+import json
+import random
+from fitdev.models.agent import BaseAgent, UTILS_AVAILABLE
+
+logger = logging.getLogger(__name__)
 
 
 class BackendDeveloperAgent(BaseAgent):
@@ -43,7 +48,131 @@ class BackendDeveloperAgent(BaseAgent):
         Returns:
             Task results and metadata
         """
-        # Task execution logic for the Backend Developer agent
+        # If LLM or learning is enabled, use enhanced execution
+        if (self.llm_enabled or self.learning_enabled) and UTILS_AVAILABLE:
+            logger.info(f"Backend Developer executing task with enhanced capabilities: {task.get('title', 'Unknown task')}")
+            
+            # Get task details
+            task_description = task.get("description", "")
+            task_type = task.get("type", "")
+            
+            # Record task type for learning
+            self.last_used["task_type"] = task_type
+            
+            # Get execution strategy from learning system if enabled
+            if self.learning_enabled:
+                strategy = self.get_task_execution_strategy(task_type)
+                logger.info(f"Using strategy: {strategy['name']} - {strategy['description']}")
+                
+                # Adjust parameters based on learning
+                thoroughness = self.get_parameter("thoroughness")
+                security_focus = self.get_parameter("security_focus") if task_type == "api_development" else 0.5
+                performance_focus = self.get_parameter("performance_focus") if task_type == "database_implementation" else 0.5
+                
+                logger.debug(f"Parameters - thoroughness: {thoroughness:.2f}, " +
+                           f"security_focus: {security_focus:.2f}, performance_focus: {performance_focus:.2f}")
+            
+            # For backend tasks that might benefit from research, do that first
+            research_results = None
+            if self.browser_enabled and task_description:
+                # Use learning parameters to decide whether to research
+                should_research = True
+                if self.learning_enabled:
+                    # More thorough agents are more likely to do research
+                    research_threshold = 0.3 if self.get_parameter("thoroughness") > 0.7 else 0.6
+                    should_research = random.random() < research_threshold
+                
+                if should_research and task_type in ["api_development", "database_implementation", "service_implementation"]:
+                    # Determine what to research based on task type
+                    research_topic = None
+                    if task_type == "api_development":
+                        api_tech = task.get("technology", "REST")
+                        research_topic = f"best practices for {api_tech} API design and implementation"
+                    elif task_type == "database_implementation":
+                        db_type = task.get("db_type", "SQL")
+                        research_topic = f"{db_type} database design optimization and best practices"
+                    elif task_type == "service_implementation":
+                        service_type = task.get("service_type", "microservice")
+                        research_topic = f"{service_type} architecture patterns and implementation"
+                    
+                    if research_topic:
+                        logger.info(f"Backend Developer researching: {research_topic}")
+                        research_results = self.research_topic(research_topic, max_pages=2)
+                        # Store in memory for future tasks
+                        self.set_memory(f"research_{task_type}", research_results)
+            
+            # Prepare context for LLM
+            task_context = {
+                "task_type": task_type,
+                "agent_skills": self.skills,
+                "task_details": task
+            }
+            
+            if research_results and research_results.get("status") == "success":
+                task_context["research_results"] = research_results
+            
+            # Add learning parameters to context if available
+            if self.learning_enabled:
+                task_context["parameters"] = {
+                    param: self.get_parameter(param)
+                    for param in ["thoroughness", "security_focus", "performance_focus", 
+                                 "risk_taking", "code_reusability"]
+                    if hasattr(self.parameter_learning, "parameters") and 
+                    param in self.parameter_learning.parameters
+                }
+                
+                # Add execution strategy
+                if hasattr(self, "last_used") and "strategy" in self.last_used:
+                    task_context["strategy"] = self.last_used["strategy"]
+            
+            # Get optimized prompt if learning is enabled
+            if self.learning_enabled and self.llm_enabled:
+                # Create prompt context with all relevant information
+                prompt_context = {
+                    "task_description": task_description,
+                    "task_type": task_type,
+                    "role": self.role,
+                    "api_type": task.get("technology", "REST") if task_type == "api_development" else "",
+                    "db_type": task.get("db_type", "SQL") if task_type == "database_implementation" else "",
+                    "service_type": task.get("service_type", "microservice") if task_type == "service_implementation" else ""
+                }
+                
+                # Get optimized prompt
+                optimized_prompt = self.get_optimized_prompt(task_type, prompt_context)
+                
+                # Use this prompt for the LLM task
+                system_message = f"You are {self.name}, a backend developer specialized in server-side logic, databases, and APIs."
+                try:
+                    response = self.get_llm_response(optimized_prompt, system_message)
+                    
+                    # Try to parse as JSON
+                    try:
+                        json_response = json.loads(response)
+                        if isinstance(json_response, dict):
+                            json_response["agent"] = self.name
+                            json_response["status"] = "completed"
+                            # Update metrics based on task execution
+                            self._update_metrics_from_task(task)
+                            return json_response
+                    except json.JSONDecodeError:
+                        # Continue with regular LLM execution if parsing fails
+                        pass
+                except Exception as e:
+                    logger.error(f"Error with optimized prompt: {str(e)}")
+            
+            # Fall back to standard LLM execution if optimized prompt fails
+            if self.llm_enabled:
+                try:
+                    llm_results = self.execute_task_with_llm(task)
+                    if llm_results and llm_results["status"] == "completed":
+                        # Update metrics based on task execution
+                        self._update_metrics_from_task(task)
+                        return llm_results
+                except Exception as e:
+                    logger.error(f"Error executing task with LLM: {str(e)}")
+                    # Fall back to standard implementation
+        
+        # Standard implementation logic based on task type
         task_type = task.get("type", "")
         results = {"status": "completed", "agent": self.name}
         

@@ -1,0 +1,12 @@
+{
+  "agent_id": "b9526295-16ae-4cc3-9196-dd5998cc27d6",
+  "role": "specialized",
+  "templates": {
+    "general": [
+      "Complete the following task: {task_description}",
+      "As a {role}, your task is to: {task_description}",
+      "You are a {role} working on: {task_description}. Provide a detailed solution."
+    ]
+  },
+  "results": {}
+}

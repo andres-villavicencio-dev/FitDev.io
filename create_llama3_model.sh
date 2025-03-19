@@ -1,11 +1,10 @@
 #!/bin/bash
 
-# variables
-model_name="llama3"
-custom_model_name="crewai-llama3"
+# Pull gemma3 and mistral-small models
+echo "Pulling gemma3:latest model..."
+ollama pull gemma3:latest
 
-#get the base model
-ollama pull $model_name
+echo "Pulling mistral-small:latest model..."
+ollama pull mistral-small:latest
 
-#create the model file
-ollama create $custom_model_name -f ./Llama3ModelFile
+echo "Models have been successfully pulled and are ready to use."

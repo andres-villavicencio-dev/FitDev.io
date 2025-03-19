@@ -22,7 +22,11 @@ DEFAULT_CONFIG = {
     "agents": {
         "default_model": "gpt-4",
         "browser_enabled": True,
-        "memory_enabled": True
+        "memory_enabled": True,
+        "ollama": {
+            "default_model": "gemma3",
+            "available_models": ["gemma3", "mistral-small"]
+        }
     },
     "compensation": {
         "base_rates": {
@@ -32,6 +36,11 @@ DEFAULT_CONFIG = {
             "specialized": 90
         },
         "performance_multiplier": 1.5
+    },
+    "llm": {
+        "default_provider": "ollama",
+        "max_tokens": 1000,
+        "temperature": 0.7
     }
 }
 

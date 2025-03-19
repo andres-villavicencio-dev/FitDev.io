@@ -1,0 +1,21 @@
+{
+  "agent_id": "b9526295-16ae-4cc3-9196-dd5998cc27d6",
+  "role": "specialized",
+  "learning_rate": 0.05,
+  "parameters": {
+    "thoroughness": 0.5,
+    "creativity": 0.5,
+    "risk_taking": 0.5
+  },
+  "history": [
+    {
+      "parameters": {
+        "thoroughness": 0.5,
+        "creativity": 0.5,
+        "risk_taking": 0.5
+      },
+      "compensation": 0.0,
+      "timestamp": null
+    }
+  ]
+}

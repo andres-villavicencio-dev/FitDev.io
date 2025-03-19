@@ -1,0 +1,31 @@
+{
+  "agent_id": "d67528e9-ea8a-4108-9aca-2f71ca1eef17",
+  "role": "development",
+  "learning_rate": 0.05,
+  "parameters": {
+    "thoroughness": 0.45,
+    "creativity": 0.5,
+    "risk_taking": 0.45,
+    "security_focus": 0.6
+  },
+  "history": [
+    {
+      "parameters": {
+        "thoroughness": 0.5,
+        "creativity": 0.5,
+        "risk_taking": 0.5
+      },
+      "compensation": 0.0,
+      "timestamp": null
+    },
+    {
+      "parameters": {
+        "thoroughness": 0.5,
+        "creativity": 0.5,
+        "risk_taking": 0.5
+      },
+      "compensation": 0.9,
+      "timestamp": null
+    }
+  ]
+}

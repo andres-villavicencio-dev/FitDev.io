@@ -1,0 +1,12 @@
+{
+  "agent_id": "fd7a6938-825a-4862-a92d-d8c8dd0a5156",
+  "role": "quality",
+  "templates": {
+    "general": [
+      "Complete the following task: {task_description}",
+      "As a {role}, your task is to: {task_description}",
+      "You are a {role} working on: {task_description}. Provide a detailed solution."
+    ]
+  },
+  "results": {}
+}

@@ -111,13 +111,18 @@ class OpenAIProvider(LLMProvider):
 class OllamaProvider(LLMProvider):
     """Ollama local LLM integration."""
     
-    def __init__(self, model_name: str = "llama3", api_base: str = None):
+    def __init__(self, model_name: str = "gemma3", api_base: str = None):
         """Initialize the Ollama provider.
         
         Args:
-            model_name: Name of the Ollama model to use
+            model_name: Name of the Ollama model to use (supported: gemma3, mistral-small)
             api_base: Base URL for the Ollama API
         """
+        # Validate model name is one of the supported models
+        if model_name not in ["gemma3", "mistral-small"]:
+            logger.warning(f"Model {model_name} is not in the supported list (gemma3, mistral-small). Using gemma3 as default.")
+            model_name = "gemma3"
+            
         super().__init__(model_name)
         self.api_base = api_base or os.getenv("OLLAMA_API_BASE", "http://localhost:11434")
         self.api_url = f"{self.api_base}/api/generate"
@@ -278,5 +283,19 @@ Structure your response as a JSON object with appropriate fields for the work ou
             temperature=0.7
         )
 
+# Import config
+from fitdev.config.config import load_config
+
+# Load config
+config = load_config()
+llm_config = config.get("llm", {})
+agents_config = config.get("agents", {})
+ollama_config = agents_config.get("ollama", {})
+
 # Global instance of the LLM manager
-llm_manager = LLMManager(default_provider=os.getenv("DEFAULT_LLM_PROVIDER", "ollama"))
+llm_manager = LLMManager(default_provider=os.getenv("DEFAULT_LLM_PROVIDER", llm_config.get("default_provider", "ollama")))
+
+# If using Ollama, initialize with the configured default model
+if "ollama" in llm_manager.providers:
+    default_ollama_model = os.getenv("OLLAMA_MODEL", ollama_config.get("default_model", "gemma3"))
+    llm_manager.providers["ollama"] = OllamaProvider(model_name=default_ollama_model)

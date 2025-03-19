@@ -11,11 +11,17 @@ import uuid
 import logging
 import os
 import json
+from pathlib import Path
 
 # Import utilities from separate modules (will be available when called from main app)
 try:
     from fitdev.utils.llm_integration import llm_manager
     from fitdev.utils.browser import browser
+    from fitdev.models.reinforcement import (
+        ParameterLearningSystem,
+        PromptEngineeringSystem,
+        TaskStrategySystem
+    )
     UTILS_AVAILABLE = True
 except ImportError:
     UTILS_AVAILABLE = False
@@ -45,6 +51,16 @@ class BaseAgent(ABC):
         self.memory: Dict[str, Any] = {}
         self.llm_enabled = os.getenv("ENABLE_LLM", "").lower() in ("true", "1", "yes")
         self.browser_enabled = os.getenv("ENABLE_BROWSER", "").lower() in ("true", "1", "yes")
+        self.learning_enabled = os.getenv("ENABLE_LEARNING", "").lower() in ("true", "1", "yes")
+        
+        # Initialize reinforcement learning systems if enabled
+        if self.learning_enabled and UTILS_AVAILABLE:
+            self._initialize_learning_systems()
+            self._load_learning_data()
+        else:
+            self.parameter_learning = None
+            self.prompt_engineering = None
+            self.task_strategy = None
         
     @abstractmethod
     def execute_task(self, task: Dict[str, Any]) -> Dict[str, Any]:
@@ -78,6 +94,11 @@ class BaseAgent(ABC):
         """
         performance_score = self.evaluate_performance()
         self.compensation = base_rate * performance_score
+        
+        # Update learning systems with new compensation data if enabled
+        if self.learning_enabled and UTILS_AVAILABLE:
+            self._update_learning_systems(self.compensation)
+            
         return self.compensation
     
     def add_skill(self, skill: str) -> None:
@@ -262,6 +283,189 @@ class BaseAgent(ABC):
                 "error": str(e)
             }
         
+    def _initialize_learning_systems(self) -> None:
+        """Initialize the reinforcement learning systems."""
+        self.parameter_learning = ParameterLearningSystem(self.id, self.role)
+        self.prompt_engineering = PromptEngineeringSystem(self.id, self.role)
+        self.task_strategy = TaskStrategySystem(self.id, self.role)
+        
+        # Track the last used strategy and prompt for updating later
+        self.last_used = {
+            "task_type": "",
+            "strategy": "",
+            "prompt_template": ""
+        }
+    
+    def _load_learning_data(self) -> None:
+        """Load learning data from files if available."""
+        data_dir = os.getenv("LEARNING_DATA_DIR", "data/learning")
+        
+        # Create directory if it doesn't exist
+        Path(data_dir).mkdir(parents=True, exist_ok=True)
+        
+        # Try to load parameter learning data
+        param_file = f"{data_dir}/{self.id}_{self.role}_parameters.json"
+        if os.path.exists(param_file):
+            try:
+                self.parameter_learning = ParameterLearningSystem.load_from_file(param_file)
+                logger.info(f"Loaded parameter learning data for {self.name}")
+            except Exception as e:
+                logger.error(f"Failed to load parameter learning data: {e}")
+        
+        # Try to load prompt engineering data
+        prompt_file = f"{data_dir}/{self.id}_{self.role}_prompts.json"
+        if os.path.exists(prompt_file):
+            try:
+                self.prompt_engineering = PromptEngineeringSystem.load_from_file(prompt_file)
+                logger.info(f"Loaded prompt engineering data for {self.name}")
+            except Exception as e:
+                logger.error(f"Failed to load prompt engineering data: {e}")
+        
+        # Try to load task strategy data
+        strategy_file = f"{data_dir}/{self.id}_{self.role}_strategies.json"
+        if os.path.exists(strategy_file):
+            try:
+                self.task_strategy = TaskStrategySystem.load_from_file(strategy_file)
+                logger.info(f"Loaded task strategy data for {self.name}")
+            except Exception as e:
+                logger.error(f"Failed to load task strategy data: {e}")
+    
+    def _update_learning_systems(self, compensation: float) -> None:
+        """Update learning systems with new compensation data.
+        
+        Args:
+            compensation: Compensation received
+        """
+        task_type = self.last_used.get("task_type", "")
+        if not task_type:
+            return
+            
+        # Update parameter learning system
+        if self.parameter_learning:
+            self.parameter_learning.update_from_compensation(compensation, task_type)
+            
+            # Save updated data
+            try:
+                self.parameter_learning.save_to_file()
+            except Exception as e:
+                logger.error(f"Failed to save parameter learning data: {e}")
+        
+        # Update prompt engineering system
+        if self.prompt_engineering and self.last_used.get("prompt_template"):
+            self.prompt_engineering.record_result(
+                task_type, 
+                self.last_used["prompt_template"],
+                compensation
+            )
+            
+            # Save updated data
+            try:
+                self.prompt_engineering.save_to_file()
+            except Exception as e:
+                logger.error(f"Failed to save prompt engineering data: {e}")
+        
+        # Update task strategy system
+        if self.task_strategy and self.last_used.get("strategy"):
+            self.task_strategy.record_result(
+                task_type, 
+                self.last_used["strategy"],
+                compensation
+            )
+            
+            # Save updated data
+            try:
+                self.task_strategy.save_to_file()
+            except Exception as e:
+                logger.error(f"Failed to save task strategy data: {e}")
+                
+        logger.debug(f"Updated learning systems for {self.name} with compensation: {compensation}")
+    
+    def get_task_execution_strategy(self, task_type: str) -> Dict[str, Any]:
+        """Get the best strategy for executing a task.
+        
+        Args:
+            task_type: Type of task
+            
+        Returns:
+            Task execution strategy
+        """
+        if not self.learning_enabled or not self.task_strategy:
+            # Default strategy if learning not enabled
+            return {
+                "name": "Standard Approach",
+                "description": "Default implementation strategy",
+                "steps": ["analyze", "implement", "test"]
+            }
+            
+        # Get strategy from learning system
+        strategy = self.task_strategy.get_strategy(task_type)
+        
+        # Record for later update
+        self.last_used["task_type"] = task_type
+        self.last_used["strategy"] = strategy["name"]
+        
+        return strategy
+    
+    def get_optimized_prompt(self, task_type: str, context: Dict[str, Any]) -> str:
+        """Get an optimized prompt for LLM interaction.
+        
+        Args:
+            task_type: Type of task
+            context: Context variables for the prompt
+            
+        Returns:
+            Optimized prompt
+        """
+        if not self.learning_enabled or not self.prompt_engineering:
+            # Default prompt if learning not enabled
+            return f"Complete this {task_type} task: {context.get('task_description', '')}"
+            
+        # Get prompt from learning system
+        prompt = self.prompt_engineering.get_prompt(task_type, context)
+        
+        # Record for later update
+        self.last_used["task_type"] = task_type
+        self.last_used["prompt_template"] = prompt
+        
+        return prompt
+    
+    def get_parameter(self, name: str) -> float:
+        """Get the current value of a learning parameter.
+        
+        Args:
+            name: Parameter name
+            
+        Returns:
+            Current parameter value (0.0 to 1.0)
+        """
+        if not self.learning_enabled or not self.parameter_learning:
+            return 0.5  # Default middle value
+            
+        return self.parameter_learning.get_parameter(name)
+    
+    def save_learning_data(self) -> None:
+        """Save all learning data to files."""
+        if not self.learning_enabled:
+            return
+            
+        if self.parameter_learning:
+            try:
+                self.parameter_learning.save_to_file()
+            except Exception as e:
+                logger.error(f"Failed to save parameter learning data: {e}")
+                
+        if self.prompt_engineering:
+            try:
+                self.prompt_engineering.save_to_file()
+            except Exception as e:
+                logger.error(f"Failed to save prompt engineering data: {e}")
+                
+        if self.task_strategy:
+            try:
+                self.task_strategy.save_to_file()
+            except Exception as e:
+                logger.error(f"Failed to save task strategy data: {e}")
+    
     def __repr__(self) -> str:
         """String representation of the agent."""
         return f"{self.name} ({self.role})"

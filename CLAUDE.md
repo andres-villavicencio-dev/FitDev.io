@@ -81,7 +81,7 @@ Some basic files with foundational functionality already exist. Build upon these
 - Run application: `python main.py`
 - Run test: `pytest test_file.py`
 - Run single test: `pytest test_file.py::test_function_name -v`
-- Run Ollama model: `./create_llama3_model.sh`
+- Pull Ollama models: `./create_llama3_model.sh`
 
 ## Code Style Guidelines
 

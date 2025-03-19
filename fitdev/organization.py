@@ -7,6 +7,7 @@ Organization Class for FitDev.io
 
 from typing import Dict, List, Any, Optional, Type
 import logging
+import os
 from pathlib import Path
 
 from fitdev.models.agent import BaseAgent
@@ -585,10 +586,18 @@ class Organization:
             # Calculate compensation at the end of the cycle
             if cycle == max_cycles - 1 or not self.get_pending_tasks():
                 self.calculate_compensation()
+                
+                # Save learning data if enabled
+                if os.getenv("ENABLE_LEARNING", "").lower() in ("true", "1", "yes"):
+                    self._save_learning_data()
         
         # Compile organization status and metrics
         total_evaluations = sum(len(evals) for evals in self.evaluations.values())
         
+        # Final save of learning data
+        if os.getenv("ENABLE_LEARNING", "").lower() in ("true", "1", "yes"):
+            self._save_learning_data()
+            
         return {
             "name": self.name,
             "agents": len(self.agents),
@@ -598,3 +607,13 @@ class Organization:
             "total_compensation": self.compensation_system.get_total_compensation(),
             "average_performance": self.compensation_system.get_average_performance()
         }
+    
+    def _save_learning_data(self) -> None:
+        """Save learning data for all agents."""
+        logger.info("Saving agent learning data...")
+        for agent_id, agent in self.agents.items():
+            if hasattr(agent, 'save_learning_data'):
+                try:
+                    agent.save_learning_data()
+                except Exception as e:
+                    logger.error(f"Failed to save learning data for {agent.name}: {e}")
