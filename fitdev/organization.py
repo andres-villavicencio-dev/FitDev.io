@@ -10,6 +10,7 @@ import logging
 from pathlib import Path
 
 from models.agent import BaseAgent
+from models.critic import BaseCritic
 from models.task import Task, TaskStatus
 from models.compensation import CompensationSystem
 from config.config import load_config
